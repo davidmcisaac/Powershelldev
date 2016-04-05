@@ -1,24 +1,38 @@
 ﻿<#
 Fun with strings
+Trying to work out dynamic methods to build domain name.
+Another reason is find out a users parent directory.
+i.e. 
+if user in this ou "ou=Manager,ou=GLA,ou=Scotland,ou=UK,ou=Europe,dc=mci,dc=local"
+take me to one level up
+ou=GLA,ou=Scotland,ou=UK,ou=Europe,dc=mci,dc=local"
 #>
 
-$domain = "ou=abc,ou=level 2,ou=level 3,ou=scot,dc=mci,dc=local"
-$domainarray = @($domain)
-$domainlength = ([regex]::Matches($domainarray, "," )).count
-$domaindccount = ([regex]::Matches($domainarray, "dc" )).count
+$ouSplit = New-Object System.Collections.ArrayList
+$t = New-Object System.Collections.ArrayList
+#DN -eq Distinguished Name from $usr = get-aduser testuser;$usr.DistinguishedName
+$usrDn ="CN=testuser,ou=Manager,ou=GLA,ou=Scotland,ou=UK,ou=Europe,dc=mci,dc=local"
+$usrDnArray = @($usrDn)
+$ouLngth = ([regex]::Matches($usrDnArray, "," )).count
+$ouDCcount = ([regex]::Matches($usrDnArray, "dc" )).count
 
-write-host "object length $domainlength"
-$domainreallength = @{expression=($domainlength - 1)}
-write-host "object length -1 is " ($domainreallength.values)
-$domainsplit = $domainarray -split ","
+write-host "object length $ouLngth"
+$ouActLngth = @{expression=($ouLngth - 1)}
+$ouParent = @{expression=($ouLngth - 2)}
+write-host "object length -1 is " ($ouActLngth.values)
+$ouSplit = $usrDnArray -split ","
 
-foreach ($i in $domainsplit) { write-host "objects within array $i";write-host "..."}
-write-host "Last object in array is" $domainsplit[-1]
-#$domainjoin = Join-Path -Path $domainsplit[-2] -ChildPath $domainsplit[-1] 
+foreach ($i in $ouSplit) 
+    {#write out contents of array to ensure that it has been slit properly
+    write-host "objects within array $i";
+    write-host "..."
+    }
+#$t = $ouSplit[2 + 3 ..($ouSplit.length - 2)]
+write-host "Last object in array is" $ouSplit[-1]
 
-if ($domaindccount-le "5")
-    {
-    switch ($domaindccount)
+if ($ouDCcount-le "5")
+    {#if count is less than 5 then. Execute switch direction to determine/split domain name from ldap string
+    switch ($ouDCcount)
     {
     1
     {# 'DC' regex count -eq 1
@@ -27,32 +41,31 @@ if ($domaindccount-le "5")
     }
     2
     {# 'DC' regex count -eq 2
-    $domainjoin = (($domainsplit[-2]) + "," + ($domainsplit[-1]))
-    Write-host "domain name is" $domainjoin
+    $domainjoin = (($ouSplit[-2]) + "," + ($ouSplit[-1]))
+    Write-host "domain ldap name is" $domainjoin
     }
     3
     {# 'DC' regex count -eq 3
-    $domainjoin = (($domainsplit[-3]) + "," + ($domainsplit[-2]) + "," + ($domainsplit[-1]))
-    Write-host "domain name is" $domainjoin
+    $domainjoin = (($ouSplit[-3]) + "," + ($ouSplit[-2]) + "," + ($ouSplit[-1]))
+    Write-host "domain ldap name is" $domainjoin
     }
     4
     {# 'DC' regex count -eq 4
-    $domainjoin = (($domainsplit[-4]) + "," + ($domainsplit[-3]) + "," + ($domainsplit[-2]) + "," + ($domainsplit[-1]))
-    Write-host "domain name is" $domainjoin
+    $domainjoin = (($ouSplit[-4]) + "," + ($ouSplit[-3]) + "," + ($ouSplit[-2]) + "," + ($ouSplit[-1]))
+    Write-host "domain ldap name is" $domainjoin
     }
     5
     {# 'DC' regex count -eq 5
-    $domainjoin = (($domainsplit[-5]) + "," + ($domainsplit[-4]) + "," + ($domainsplit[-3]) + "," + ($domainsplit[-2]) + "," + ($domainsplit[-1]))
-    Write-host "domain name is" $domainjoin
+    $domainjoin = (($ouSplit[-5]) + "," + ($ouSplit[-4]) + "," + ($ouSplit[-3]) + "," + ($ouSplit[-2]) + "," + ($ouSplit[-1]))
+    Write-host "domain ldap name is" $domainjoin
     }
     }
 
         
         }
 else 
-    {
+    {#bomb out and write error
     Write-host "Error domain name input exceeding thresholds"
     exit
     }
-
 exit
